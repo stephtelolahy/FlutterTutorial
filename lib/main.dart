@@ -1,105 +1,116 @@
 import 'package:flutter/material.dart';
 import 'package:english_words/english_words.dart';
 
-void main() => runApp(MyApp());
+class Product {
+  const Product({this.name});
 
-class MyApp extends StatelessWidget {
+  final String name;
+}
+
+typedef void CartChangedCallback(Product product, bool inCart);
+
+class ShoppingListItem extends StatelessWidget {
+  ShoppingListItem({this.product, this.inCart, this.onCartChanged})
+      : super(key: ObjectKey(product));
+
+  final Product product;
+  final bool inCart;
+  final CartChangedCallback onCartChanged;
+
+  Color _getColor(BuildContext context) {
+    // The theme depends on the BuildContext because different parts
+    // of the tree can have different themes.
+    // The BuildContext indicates where the build is
+    // taking place and therefore which theme to use.
+
+    return inCart ? Colors.black54 : Theme.of(context).primaryColor;
+  }
+
+  TextStyle _getTextStyle(BuildContext context) {
+    if (!inCart) return null;
+
+    return TextStyle(
+      color: Colors.black54,
+      decoration: TextDecoration.lineThrough,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(title: 'Welcome to Flutter',
-        theme: ThemeData(
-          primaryColor: Colors.cyan
-        ),
-        home: RandomWords());
+    return ListTile(
+      onTap: () {
+        onCartChanged(product, inCart);
+      },
+      leading: CircleAvatar(
+        backgroundColor: _getColor(context),
+        child: Text(product.name[0]),
+      ),
+      title: Text(product.name, style: _getTextStyle(context)),
+    );
   }
 }
 
-class RandomWords extends StatefulWidget {
+class ShoppingList extends StatefulWidget {
+  ShoppingList({Key key, this.products}) : super(key: key);
+
+  final List<Product> products;
+
+  // The framework calls createState the first time a widget
+  // appears at a given location in the tree.
+  // If the parent rebuilds and uses the same type of
+  // widget (with the same key), the framework re-uses the State object
+  // instead of creating a new State object.
+
   @override
-  _RandomWordsState createState() => _RandomWordsState();
+  _ShoppingListState createState() => _ShoppingListState();
 }
 
-class _RandomWordsState extends State<RandomWords> {
-  final _suggestions = <WordPair>[];
-  final _saved = Set<WordPair>();
-  final _biggerFont = TextStyle(fontSize: 18.0);
+class _ShoppingListState extends State<ShoppingList> {
+  Set<Product> _shoppingCart = Set<Product>();
+
+  void _handleCartChanged(Product product, bool inCart) {
+    setState(() {
+      // When a user changes what's in the cart, you need to change
+      // _shoppingCart inside a setState call to trigger a rebuild.
+      // The framework then calls build, below,
+      // which updates the visual appearance of the app.
+
+      if (!inCart)
+        _shoppingCart.add(product);
+      else
+        _shoppingCart.remove(product);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Startup Name Generator'),
-        actions: [IconButton(icon: Icon(Icons.list), onPressed: _pushSaved)],
+        title: Text('Shopping List'),
       ),
-      body: _buildSuggestions(),
-    );
-  }
-
-  Widget _buildSuggestions() {
-    return ListView.builder(
-        padding: EdgeInsets.all(16.0),
-        itemBuilder: /*1*/ (context, i) {
-          if (i.isOdd) return Divider();
-          /*2*/
-
-          final index = i ~/ 2; /*3*/
-          if (index >= _suggestions.length) {
-            _suggestions.addAll(generateWordPairs().take(10)); /*4*/
-          }
-          return _buildRow(_suggestions[index]);
-        });
-  }
-
-  Widget _buildRow(WordPair pair) {
-    final alreadySaved = _saved.contains(pair);
-    return ListTile(
-      title: Text(
-        pair.asPascalCase,
-        style: _biggerFont,
-      ),
-      trailing: Icon(
-        alreadySaved ? Icons.favorite : Icons.favorite_border,
-        color: alreadySaved ? Colors.red : null,
-      ),
-      onTap: () {
-        setState(() {
-          if (alreadySaved) {
-            _saved.remove(pair);
-          } else {
-            _saved.add(pair);
-          }
-        });
-      },
-    );
-  }
-
-  void _pushSaved() {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (BuildContext context) {
-          final tiles = _saved.map(
-                (WordPair pair) {
-              return ListTile(
-                title: Text(
-                  pair.asPascalCase,
-                  style: _biggerFont,
-                ),
-              );
-            },
+      body: ListView(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        children: widget.products.map((Product product) {
+          return ShoppingListItem(
+            product: product,
+            inCart: _shoppingCart.contains(product),
+            onCartChanged: _handleCartChanged,
           );
-          final divided = ListTile.divideTiles(
-            context: context,
-            tiles: tiles,
-          ).toList();
-
-          return Scaffold(
-            appBar: AppBar(
-              title: Text('Saved Suggestions'),
-            ),
-            body: ListView(children: divided),
-          );
-        },
-      )
+        }).toList(),
+      ),
     );
   }
+}
+
+void main() {
+  runApp(MaterialApp(
+    title: 'Shopping App',
+    home: ShoppingList(
+      products: <Product>[
+        Product(name: 'Eggs'),
+        Product(name: 'Flour'),
+        Product(name: 'Chocolate chips'),
+      ],
+    ),
+  ));
 }
