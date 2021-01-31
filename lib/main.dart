@@ -5,6 +5,7 @@ import 'package:flutter_app/examples/layouts.dart';
 import 'package:flutter_app/examples/loasdvg.dart';
 import 'package:flutter_app/examples/namedroutes.dart';
 import 'package:flutter_app/examples/routes2.dart';
+import 'package:flutter_app/examples/showmodal.dart';
 import 'package:flutter_app/examples/tapboxb.dart';
 import 'package:flutter_app/examples/widgets.dart';
 
@@ -18,6 +19,7 @@ void main() {
     // home: ParentWidget(),
     // home: Nav2App(),
     // home: BooksApp(),
-    home: SvgApp(),
+    // home: SvgApp(),
+    home: ShowModalApp(),
   ));
 }
